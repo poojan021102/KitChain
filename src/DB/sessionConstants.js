@@ -1,0 +1,34 @@
+const path = require("path");
+const { USER_EMAIL } = require(path.join(__dirname, "userConstants"));
+
+const SESSION_DB_NAME = "Session";
+const SESSION_TABLE_NAME = "Session";
+const SESSION_ID = "session_id";
+const EXPIRES_AT = "expires_at";
+const ROLE = "user_role";
+const CREATED_AT = "created_at";
+const SESSION_EXPIRY_HOURS = 24;
+
+const CREATE_SESSION_DETAILS = [SESSION_ID, EXPIRES_AT, ROLE, CREATED_AT, USER_EMAIL];
+
+const SESSION_DB_CREATION_SQL = `
+CREATE TABLE IF NOT EXISTS ${SESSION_TABLE_NAME} (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ${SESSION_ID} TEXT UNIQUE NOT NULL,
+  ${USER_EMAIL} TEXT NOT NULL,
+  ${ROLE} TEXT,
+  ${CREATED_AT} DATETIME,
+  ${EXPIRES_AT} DATETIME NOT NULL
+)
+`
+module.exports = {
+    SESSION_DB_NAME,
+    SESSION_TABLE_NAME,
+    SESSION_ID,
+    EXPIRES_AT,
+    ROLE,
+    CREATED_AT,
+    SESSION_DB_CREATION_SQL,
+    CREATE_SESSION_DETAILS,
+    SESSION_EXPIRY_HOURS
+};
