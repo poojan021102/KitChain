@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require("path");
-const { USER_TABLE_NAME, USER_DB_TABLE_CREATION_SQL, USER_EMAIL, USER_REGESTERATION_DETAILS } = require(path.join(__dirname, "..", "..", "DB","userConstants"));
+const { USER_TABLE_NAME, USER_DB_TABLE_CREATION_SQL, USER_EMAIL, USER_REGESTERATION_DETAILS ,USER_INFORMATION_FROM_SESSION_DETAILS} = require(path.join(__dirname, "..", "..", "DB","userConstants"));
+
 const { SESSION_ID,EXPIRES_AT,CREATED_AT,SESSION_EXPIRY_HOURS, ROLE } = require(path.join(__dirname, "..","..","DB","sessionConstants"));
 const { SessionHelper } = require(path.join(__dirname, "..","session","session"));
 const { ALL_ROLES } = require(path.join(__dirname, "..","..","DB","constants"));
@@ -101,12 +102,19 @@ class UserBuilder{
                         if(row.password != loginInformation.password)return reject({status: 401, error: true, message: 'Invalid email or password'});
                         resolve(row);
                     }
-                );
+                )
             });
             const sessionId = crypto.randomUUID(); // or use randomBytes(16).toString('hex')
             const now = new Date();
             // const expiresAt = new Date(now.getTime() + SESSION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString(); // +24 hrs
-            const expiresAt = new Date(now + SESSION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();;
+            // const expiresAt = new Date(now + SESSION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();;
+            const nowMs = now.getTime();
+
+            // Step 2: Add 24 hours
+            const expiryMs = nowMs + SESSION_EXPIRY_HOURS * 60 * 60 * 1000;
+
+            // Step 3: Convert to ISO string
+            const expiresAt = new Date(expiryMs).toISOString();
 
             const status = await SessionHelper.createNewSession({
                 [SESSION_ID]: sessionId,
@@ -134,6 +142,47 @@ class UserBuilder{
                 message: "Internal Server Error",
                 error: true 
             }
+        }
+    }
+    static async fetchUserFromSession(userInformation){
+        try{
+            let sqlString = `SELECT * FROM ${USER_TABLE_NAME} where `;
+            let givenInformation = [];
+            let givenValues = [];
+            USER_INFORMATION_FROM_SESSION_DETAILS.map(key => {
+                let value = userInformation[key];
+                if(value){
+                    givenInformation.push(key);
+                    givenValues.push(value);
+                }
+            });
+            
+            sqlString += givenInformation.map((key) => `${key} = ? `).join("and ");
+            const user = await new Promise((resolve, reject) => {
+                userDb.get(
+                    sqlString,
+                    givenValues,
+                    (err, row) => {
+                            if (err) return reject({ status: 500, error: true, message: 'Database error' });
+                            if (!row) return reject({ status: 404, error: true, message: 'User not found' });
+                            resolve(row);
+                        }
+                )
+            });
+            
+            return {
+                status: 201,
+                error: false,
+                user: new User(user)
+            };
+        }
+        catch(err){
+            console.log(err);
+            return err.status ? err : {
+                status: 500,
+                message: "Internal Server Error",
+                error: true
+            };
         }
     }
 }
