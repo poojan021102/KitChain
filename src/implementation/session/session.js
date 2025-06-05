@@ -1,14 +1,14 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require("path");
-
+const { SESSION_DB_INSTANCE } = require(path.join(__dirname, "..","..","DB","dbInstance"));
 const { SESSION_DB_NAME, SESSION_TABLE_NAME, CHECK_LOGIN_DETAILS,SESSION_ID, USER_EMAIL, EXPIRES_AT, ROLE, CREATED_AT, SESSION_DB_CREATION_SQL, CREATE_SESSION_DETAILS } = require(path.join(__dirname, "..","..","DB", "sessionConstants"));
 
-const SESSION_DB_PATH = path.join(__dirname, "..","..","DB",`${SESSION_DB_NAME}.db`);
+// const SESSION_DB_PATH = path.join(__dirname, "..","..","DB",`${SESSION_DB_NAME}.db`);
 
-let sessionDb = new sqlite3.Database(SESSION_DB_PATH);
+// let SESSION_DB_INSTANCE = new sqlite3.Database(SESSION_DB_PATH);
 
 createTable = () => {
-    sessionDb.run(SESSION_DB_CREATION_SQL);
+    SESSION_DB_INSTANCE.run(SESSION_DB_CREATION_SQL);
 };
 
 createTable();
@@ -16,7 +16,6 @@ createTable();
 class SessionHelper{
     static async createNewSession(sessionInformation){
         try{
-            console.log(sessionInformation)
             let givenInformation = [];
             let givenValues = [];
             CREATE_SESSION_DETAILS.map(key => {
@@ -30,7 +29,7 @@ class SessionHelper{
                 let creationSqlString = `insert into ${SESSION_TABLE_NAME} `
                 creationSqlString += "(" + givenInformation.join(",") + ")" + " VALUES ";
                 creationSqlString += "(" + givenInformation.map(() => '?').join(',') + ")";
-                sessionDb.run(creationSqlString, givenValues, (err) => {
+                SESSION_DB_INSTANCE.run(creationSqlString, givenValues, (err) => {
                     if (err) {console.log(err);return reject({ status: 500, error: true, message: "Insertion failed" });}
                     resolve();
                 });
@@ -57,7 +56,7 @@ class SessionHelper{
             });
             sqlString += givenInformation.map((key, index) => `${key} = ? `).join("and ");
             const sessionRow = await new Promise((resolve, reject) => {
-                sessionDb.get(
+                SESSION_DB_INSTANCE.get(
                     sqlString,
                     givenValues,
                     (err, row) => {
@@ -73,7 +72,7 @@ class SessionHelper{
             if (now > expiry) {
                 // Session expired — delete it
                 await new Promise((resolve, reject) => {
-                sessionDb.run(
+                SESSION_DB_INSTANCE.run(
                         `DELETE FROM ${SESSION_TABLE_NAME} WHERE ${SESSION_ID} = ?`,
                         [sessionInformation[SESSION_ID]],
                         (err) => {

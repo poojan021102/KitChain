@@ -35,7 +35,7 @@ loginRouter.post(USER_LOGIN_ROUTE, userLoginBody,async(req, res) => {
     }
 });
 
-loginRouter.get("/restaurant-owner", (req, res) => {
+loginRouter.get(RESTAURANT_OWNER_LOGIN_ROUTE, (req, res) => {
 
 });
 

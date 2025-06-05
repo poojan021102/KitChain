@@ -1,37 +1,34 @@
 const path = require("path");
 const { USER_TABLE_NAME, USER_DB_TABLE_CREATION_SQL, USER_EMAIL, USER_REGESTERATION_DETAILS ,USER_INFORMATION_FROM_SESSION_DETAILS} = require(path.join(__dirname, "..", "..", "DB","userConstants"));
+const { RESTAURANT_OWNER_TABLE_CREATION_SQL, RESTAURANT_OWNER_TABLE_NAME, RESTAURANT_OWNER_EMAIL, RESTAURANT_OWNER_REGISTRATION_DETAILS, RESTAURANT_OWNER_FROM_SESSION_DETAILS } = require(path.join(__dirname, "..", "..", "DB","restaurantOwnerConstants"));
 const { DB } = require(path.join(__dirname, "..","..","DB","dbInstance"));
 const { SESSION_ID,EXPIRES_AT,CREATED_AT,SESSION_EXPIRY_HOURS, ROLE } = require(path.join(__dirname, "..","..","DB","sessionConstants"));
 const { SessionHelper } = require(path.join(__dirname, "..","session","session"));
 const { ALL_ROLES } = require(path.join(__dirname, "..","..","DB","constants"));
-
-const { DB_NAME } = require(path.join(__dirname, "..", "..", "DB","constants"));
 const crypto = require("crypto");
 
-// const DB_PATH = path.join(__dirname, "..","..","DB", `${DB_NAME}.db`);
-
-class User{
-    constructor(userInformation){
-        this.userInformation = userInformation;
+class RestaurantOwner{
+    constructor(restaurantOwnerInformation){
+        this.restaurantOwnerInformation = restaurantOwnerInformation;
     }
-    getJson(){
-        return this.userInformation;
+    getJson()
+    {
+        return this.restaurantOwnerInformation;
     }
 }
 
-
 createTable = () => {
-    DB.run(USER_DB_TABLE_CREATION_SQL)
+    DB.run(RESTAURANT_OWNER_TABLE_CREATION_SQL)
 };
 createTable();
 
-class UserBuilder{
-    static async createUser(userInformation){
-        try{
+class RestaurantOwnerBuilder{
+    static async createRestaurantOwner(restaurantOwnerInformation){
+         try{
             await new Promise((resolve, reject) => {
                 DB.get(
-                `SELECT * FROM ${USER_TABLE_NAME} WHERE ${USER_EMAIL} = ?`,
-                    [userInformation[USER_EMAIL]],
+                `SELECT * FROM ${RESTAURANT_OWNER_TABLE_NAME} WHERE ${RESTAURANT_OWNER_EMAIL} = ?`,
+                    [restaurantOwnerInformation[RESTAURANT_OWNER_EMAIL]],
                     (err, row) => {
                         if (err) return reject({ error: true, message: 'Database error', status: 500 });
                         if (row) return reject({ error: true, message: 'Email already exists', status: 400 });
@@ -41,8 +38,8 @@ class UserBuilder{
             });
             let givenInformation = [];
             let givenValues = [];
-            USER_REGESTERATION_DETAILS.map(key => {
-                let value = userInformation[key];
+            RESTAURANT_OWNER_REGISTRATION_DETAILS.map(key => {
+                let value = restaurantOwnerInformation[key];
                 if(value){
                     givenInformation.push(key);
                     givenValues.push(value);
@@ -51,7 +48,7 @@ class UserBuilder{
             
             
             await new Promise((resolve, reject) => {
-                let creationSqlString = `insert into ${USER_TABLE_NAME} `
+                let creationSqlString = `insert into ${RESTAURANT_OWNER_TABLE_NAME} `
                 creationSqlString += "(" + givenInformation.join(",") + ")" + " VALUES ";
                 creationSqlString += "(" + givenInformation.map(() => '?').join(',') + ")";
 
@@ -64,7 +61,7 @@ class UserBuilder{
             return {
                 status: 201,
                 error: false,
-                user: new User(userInformation)
+                restaurant_owner: new RestaurantOwner(restaurantOwnerInformation)
             };
         }
         catch(err){
@@ -79,28 +76,28 @@ class UserBuilder{
     static async login(loginInformation){
         try{
 
-            let sqlString = `SELECT * FROM ${USER_TABLE_NAME} where `;
+            let sqlString = `SELECT * FROM ${RESTAURANT_OWNER_TABLE_NAME} where `;
             let givenInformation = [];
             let givenValues = [];
-            USER_REGESTERATION_DETAILS.map(key => {
+            RESTAURANT_OWNER_REGISTRATION_DETAILS.map(key => {
                 let value = loginInformation[key];
                 if(value){
                     givenInformation.push(key);
                     givenValues.push(value);
                 }
             });
-            sqlString += givenInformation.map((key, index) => `${key} = ? `).join("and ");
-            const user = await new Promise((resolve, reject) => {
-            DB.get(
-                sqlString,
-                givenValues,
-                (err, row) => {
-                        if (err) return reject({ status: 500, error: true, message: 'Database error' });
-                        if (!row) return reject({ status: 404, error: true, message: 'User not found' });
-                        if(row.password != loginInformation.password)return reject({status: 401, error: true, message: 'Invalid email or password'});
-                        resolve(row);
-                    }
-                )
+            sqlString += givenInformation.map((key) => `${key} = ? `).join("and ");
+            const restaurant_owner = await new Promise((resolve, reject) => {
+                DB.get(
+                    sqlString,
+                    givenValues,
+                    (err, row) => {
+                            if (err) return reject({ status: 500, error: true, message: 'Database error' });
+                            if (!row) return reject({ status: 404, error: true, message: 'User not found' });
+                            if(row.password != loginInformation.password)return reject({status: 401, error: true, message: 'Invalid email or password'});
+                            resolve(row);
+                        }
+                    )
             });
             const sessionId = crypto.randomUUID(); // or use randomBytes(16).toString('hex')
             const now = new Date();
@@ -119,12 +116,12 @@ class UserBuilder{
                 [EXPIRES_AT]: expiresAt,
                 [CREATED_AT]: now,
                 [USER_EMAIL]: loginInformation[USER_EMAIL],
-                [ROLE]: ALL_ROLES.NORMAL_USER
+                [ROLE]: ALL_ROLES.RESTAURANT_OWNER
             });
             let finalObject = {
                 "status": 200,
                 "error": false,
-                "user": new User(user)
+                "restaurant_owner": new RestaurantOwner(restaurant_owner)
             };
             if(status){
                 finalObject[SESSION_ID] = sessionId;
@@ -142,13 +139,14 @@ class UserBuilder{
             }
         }
     }
-    static async fetchUserFromSession(userInformation){
+
+    static async fetchRestaurantOwnerFromSession(restaurantOwnerInformation){
         try{
-            let sqlString = `SELECT * FROM ${USER_TABLE_NAME} where `;
+            let sqlString = `SELECT * FROM ${RESTAURANT_OWNER_TABLE_NAME} where `;
             let givenInformation = [];
             let givenValues = [];
-            USER_INFORMATION_FROM_SESSION_DETAILS.map(key => {
-                let value = userInformation[key];
+            RESTAURANT_OWNER_FROM_SESSION_DETAILS.map(key => {
+                let value = restaurantOwnerInformation[key];
                 if(value){
                     givenInformation.push(key);
                     givenValues.push(value);
@@ -156,7 +154,7 @@ class UserBuilder{
             });
             
             sqlString += givenInformation.map((key) => `${key} = ? `).join("and ");
-            const user = await new Promise((resolve, reject) => {
+            const restaurantOwner = await new Promise((resolve, reject) => {
                 DB.get(
                     sqlString,
                     givenValues,
@@ -171,7 +169,7 @@ class UserBuilder{
             return {
                 status: 201,
                 error: false,
-                user: new User(user)
+                restaurant_owner : new RestaurantOwner(restaurantOwner)
             };
         }
         catch(err){
@@ -186,5 +184,5 @@ class UserBuilder{
 }
 
 module.exports = {
-    UserBuilder
+    RestaurantOwnerBuilder
 }
