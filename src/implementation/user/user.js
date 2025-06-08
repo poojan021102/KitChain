@@ -1,6 +1,6 @@
 const path = require("path");
 const { USER_TABLE_NAME, USER_DB_TABLE_CREATION_SQL, USER_EMAIL, USER_REGESTERATION_DETAILS ,USER_INFORMATION_FROM_SESSION_DETAILS} = require(path.join(__dirname, "..", "..", "DB","userConstants"));
-const { DB } = require(path.join(__dirname, "..","..","DB","dbInstance"));
+const { DB } = require(path.join(__dirname, "..","..","DB","dbInstances"));
 const { SESSION_ID,EXPIRES_AT,CREATED_AT,SESSION_EXPIRY_HOURS, ROLE } = require(path.join(__dirname, "..","..","DB","sessionConstants"));
 const { SessionHelper } = require(path.join(__dirname, "..","session","session"));
 const { ALL_ROLES } = require(path.join(__dirname, "..","..","DB","constants"));

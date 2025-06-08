@@ -1,7 +1,7 @@
 const path = require("path");
-const { SESSION_ID } = require(path.join(__dirname, "..","..","..", "DB","sessionConstants"));
+const { SESSION_ID, ROLE } = require(path.join(__dirname, "..","..","..", "DB","sessionConstants"));
 const { USER_EMAIL } = require(path.join(__dirname, "..","..","..", "DB","userConstants"));
-
+const { ALL_ROLES } = require(path.join(__dirname, "..", "..", "..", "DB", "constants"));
 
 const CHECK_LOGIN_REQUEST_RULE = {
     "body":{
@@ -12,6 +12,11 @@ const CHECK_LOGIN_REQUEST_RULE = {
         [USER_EMAIL]:{
             required: true,
             type: "string"
+        },
+        [ROLE]: {
+            required: true,
+            type: "string",
+            exact: [ALL_ROLES.NORMAL_USER, ALL_ROLES.RESTAURANT_OWNER]
         }
     }
 };

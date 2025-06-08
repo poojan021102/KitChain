@@ -1,7 +1,7 @@
 const path = require("path");
 const { USER_TABLE_NAME, USER_DB_TABLE_CREATION_SQL, USER_EMAIL, USER_REGESTERATION_DETAILS ,USER_INFORMATION_FROM_SESSION_DETAILS} = require(path.join(__dirname, "..", "..", "DB","userConstants"));
 const { RESTAURANT_OWNER_TABLE_CREATION_SQL, RESTAURANT_OWNER_TABLE_NAME, RESTAURANT_OWNER_EMAIL, RESTAURANT_OWNER_REGISTRATION_DETAILS, RESTAURANT_OWNER_FROM_SESSION_DETAILS } = require(path.join(__dirname, "..", "..", "DB","restaurantOwnerConstants"));
-const { DB } = require(path.join(__dirname, "..","..","DB","dbInstance"));
+const { DB } = require(path.join(__dirname, "..","..","DB","dbInstances"));
 const { SESSION_ID,EXPIRES_AT,CREATED_AT,SESSION_EXPIRY_HOURS, ROLE } = require(path.join(__dirname, "..","..","DB","sessionConstants"));
 const { SessionHelper } = require(path.join(__dirname, "..","session","session"));
 const { ALL_ROLES } = require(path.join(__dirname, "..","..","DB","constants"));
@@ -11,14 +11,13 @@ class RestaurantOwner{
     constructor(restaurantOwnerInformation){
         this.restaurantOwnerInformation = restaurantOwnerInformation;
     }
-    getJson()
-    {
+    getJson(){
         return this.restaurantOwnerInformation;
     }
 }
 
 createTable = () => {
-    DB.run(RESTAURANT_OWNER_TABLE_CREATION_SQL)
+    DB.run(RESTAURANT_OWNER_TABLE_CREATION_SQL);
 };
 createTable();
 
@@ -110,7 +109,7 @@ class RestaurantOwnerBuilder{
 
             // Step 3: Convert to ISO string
             const expiresAt = new Date(expiryMs).toISOString();
-
+            // const expiresAt = new Date();
             const status = await SessionHelper.createNewSession({
                 [SESSION_ID]: sessionId,
                 [EXPIRES_AT]: expiresAt,
@@ -128,6 +127,7 @@ class RestaurantOwnerBuilder{
                 finalObject[EXPIRES_AT] = expiresAt;
                 finalObject[CREATED_AT] = now;
             }
+            
             return finalObject;
         }
         catch(err){

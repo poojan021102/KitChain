@@ -28,6 +28,7 @@ class LoginCheck{
             };
             const session = loginSession.session;
             if(session[ROLE] == ALL_ROLES.NORMAL_USER){
+                console.log("Here")
                 let user_temp = await UserBuilder.fetchUserFromSession({
                     [USER_EMAIL]: sessionInformation[USER_EMAIL]
                 });
@@ -44,8 +45,9 @@ class LoginCheck{
                 if(!restaurant_owner_temp.error)user = {
                     status: 200,
                     error: false,
-                    restaurant_owner: user_temp.restaurant_owner
+                    user: restaurant_owner_temp.restaurant_owner
                 }
+                
             }
             return user;
         }
