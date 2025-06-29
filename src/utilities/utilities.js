@@ -29,11 +29,11 @@ const checkRequestFormate = (rule, req) => {
         }
 
         // Check for extra fields not defined in the rule
-        for (const key of Object.keys(requestSection)) {
-            if (!sectionRules.hasOwnProperty(key)) {
-                errors.push(`${key} is not allowed in ${sectionName}`);
-            }
-        }
+        // for (const key of Object.keys(requestSection)) {
+        //     if (!sectionRules.hasOwnProperty(key)) {
+        //         errors.push(`${key} is not allowed in ${sectionName}`);
+        //     }
+        // }
     };
 
     if (rule.body) {
